@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      # New commits pushed to the HEAD of an open PR.
+      - synchronize
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,     target: linux-x86_64-gnu  }
+          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu }
+          - { os: macos-15,         target: macos-aarch64     }
+          - { os: windows-2025,     target: windows-x86_64    }
+
+    env:
+      # Compiler version downloaded from awsum-lang/awsum GitHub Releases.
+      # Bumped together with the examples release tag — for tag
+      # `X.Y.Z-awsum-A.B.C`, this is `A.B.C`.
+      AWSUM_VERSION: 0.0.3
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The LLVM backend pipes generated `.ll` through `clang`, which must be
+      # LLVM 15+ for opaque pointers. Per-OS install mechanisms mirror
+      # awsum/.github/workflows/check-and-build.yml — see that file for the
+      # detailed reasoning behind each choice.
+
+      - name: Set up LLVM 15 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+          sudo ln -sf /usr/bin/clang-15 /usr/local/bin/clang
+
+      - name: Set up LLVM 15 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@15
+          echo "$(brew --prefix llvm@15)/bin" >> "$GITHUB_PATH"
+
+      - name: Set up LLVM 15 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url  = "https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/LLVM-15.0.7-win64.exe"
+          $exe  = "$env:RUNNER_TEMP\llvm-installer.exe"
+          $dest = "$env:RUNNER_TEMP\llvm"
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $exe $url
+          $size = (Get-Item $exe).Length
+          if ($size -lt 1000000) {
+            throw "LLVM installer is only $size bytes — download likely failed"
+          }
+          Start-Process -FilePath $exe -ArgumentList "/S","/D=$dest" -Wait -NoNewWindow
+          if (-not (Test-Path "$dest\bin\clang.exe")) {
+            throw "clang.exe not found at $dest\bin after install"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value "$dest\bin"
+
+      - name: Verify clang resolves to LLVM 15
+        run: |
+          set -eu
+          clang --version
+          case "$(clang --version | head -n1)" in
+            *"version 15."*) echo "OK: clang is LLVM 15.x" ;;
+            *) echo "ERROR: clang is not LLVM 15.x"; exit 1 ;;
+          esac
+
+      - name: Install awsum from GitHub Release (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          url="https://github.com/awsum-lang/awsum/releases/download/v${AWSUM_VERSION}/awsum-${AWSUM_VERSION}-${{ matrix.target }}.tar.gz"
+          dest="$RUNNER_TEMP/awsum"
+          mkdir -p "$dest"
+          curl -fsSL --retry 3 --retry-delay 2 -o "$dest/awsum.tar.gz" "$url"
+          tar -C "$dest" -xzf "$dest/awsum.tar.gz"
+          chmod +x "$dest/awsum"
+          echo "$dest" >> "$GITHUB_PATH"
+
+      - name: Install awsum from GitHub Release (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url  = "https://github.com/awsum-lang/awsum/releases/download/v$env:AWSUM_VERSION/awsum-$env:AWSUM_VERSION-${{ matrix.target }}.zip"
+          $zip  = "$env:RUNNER_TEMP\awsum.zip"
+          $dest = "$env:RUNNER_TEMP\awsum"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $zip $url
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          Add-Content -Path $env:GITHUB_PATH -Value $dest
+
+      - name: Verify awsum
+        run: awsum --version
+
+      - name: Run hello example on LLVM backend
+        run: |
+          set -euo pipefail
+          actual=$(awsum run hello/Main.aww --program-type cli -t llvm --stdin < hello/input.txt)
+          expected="Hello, world!"
+          if [[ "$actual" != "$expected" ]]; then
+            printf 'expected: %s\nactual:   %s\n' "$expected" "$actual"
+            exit 1
+          fi
+          echo "OK: $actual"
