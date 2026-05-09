@@ -1,13 +1,29 @@
--- Test: basic string concatenation, helper functions, and IO.Stdout.print
+-- Basic string concatenation, helper function, IO.Stdout.print and
+-- IO.Args.getArgs. Reads argv[1] via the IO chain, decodes through
+-- the platform validator, prints the greeting.
 import IO.Stdout
-
-main : String -> IO Unit
-main input = IO.Stdout.print (addGreeting input)
-
-{- Block comment -}
+import IO.Args
 
 greeting : String
 greeting = "Hello" -- Line comment
 
-addGreeting : String -> String
-addGreeting name = greeting ++ ", " ++ name ++ "!"
+addGreeting : String -> Either StringTooLong String
+addGreeting name = do
+  s0 <- greeting ++ ", "
+  s1 <- s0 ++ name
+  s1 ++ "!"
+
+greet : String -> IO Never Unit
+greet input = case addGreeting input of
+  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+  Right s -> IO.Stdout.print s
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO greet
+  |> handleErrorIO handleInputErr
