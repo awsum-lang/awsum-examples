@@ -4,6 +4,9 @@
 import IO.Stdout
 import IO.Args
 
+_unused : Int32
+_unused = 42
+
 greeting : String
 greeting = "Hello" -- Line comment
 
