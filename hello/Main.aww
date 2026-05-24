@@ -1,6 +1,7 @@
--- Basic string concatenation, helper function, IO.Stdout.print and
--- IO.Args.getArgs. Reads argv[1] via the IO chain, decodes through
--- the platform validator, prints the greeting.
+{- Basic string concatenation, helper function, IO.Stdout.print and
+IO.Args.getArgs. Reads argv[1] via the IO chain, decodes through
+the platform validator, prints the greeting. -}
+
 import IO.Stdout
 import IO.Args
 
