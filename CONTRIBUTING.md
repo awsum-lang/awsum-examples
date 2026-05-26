@@ -14,9 +14,27 @@ just fix       # format + test
 
 `just test` requires the same five backend runtimes that the Awsum compiler's CI uses — LLVM 15 (`clang`), JDK 11, .NET 9, `wasmtime`, Node 22. See [.github/workflows/ci.yml](.github/workflows/ci.yml) for the matching install scripts.
 
+## Developer Certificate of Origin
+
+By contributing to `awsum-examples` you certify the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) for your contribution — a short statement that you wrote the patch yourself, or otherwise have the right to submit it under the project's [Apache-2.0 license](LICENSE). The full text is at the link above.
+
+After cloning, run once:
+
+```bash
+just setup-dev
+```
+
+This installs the `prepare-commit-msg` hook from [scripts/git-hooks/](scripts/git-hooks/) (via per-clone `core.hooksPath`), which adds a `Signed-off-by` trailer to every commit you make in this clone:
+
+```
+Signed-off-by: Your Name <you@example.com>
+```
+
+The trailer uses the name and email from your `[user]` section in `~/.gitconfig` (the same one used for signed commits below). No manual flags, no global gitconfig changes. The setup is per-clone — repeat in each clone of the repo.
+
 ## Signed commits
 
-The `main` branch requires signed commits — every commit you push to a PR needs a verified signature, otherwise the merge button stays grey.
+Separately from the DCO trailer above, the `main` branch requires signed commits — every commit you push to a PR needs a verified signature (GPG or SSH), otherwise the merge button stays grey.
 
 Minimal `~/.gitconfig` for SSH signing:
 
