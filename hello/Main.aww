@@ -1,6 +1,6 @@
 {- Basic string concatenation, helper function, IO.Stdout.print and
-IO.Args.getArgs. Reads argv[1] via the IO chain, decodes through
-the platform validator, prints the greeting. -}
+IO.Args.getArgs. Reads the first command-line argument from the IO
+chain, decodes through the platform validator, prints the greeting. -}
 
 import IO.Stdout
 import IO.Args
@@ -17,10 +17,17 @@ addGreeting name = do
   s1 <- s0 ++ name
   s1 ++ "!"
 
-greet : String -> IO Never Unit
-greet input = case addGreeting input of
-  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
-  Right s -> IO.Stdout.print s
+type NoArg = NoArg
+
+greet : List String -> IO Never Unit
+greet args =
+  let res : Either (NoArg | StringTooLong) String = do
+        first <- nothingAsLeft NoArg (headList args)
+        addGreeting first
+   in case res of
+        Left (_n : NoArg) -> IO.Stdout.print "NO_ARG"
+        Left (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s
 
 handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
 handleInputErr e = case e of

@@ -4,14 +4,14 @@ Example programs for the [Awsum](https://awsum-lang.org) programming language (`
 
 ## Examples
 
-- [hello/](hello/) — basic string concatenation, helper function, `IO.Stdout.print` + `IO.Args.getArgs`. Reads `argv[1]` via the IO chain, decodes through the platform validator, prints the greeting.
+- [hello/](hello/) — basic string concatenation, helper function, `IO.Stdout.print` + `IO.Args.getArgs`. Reads the first command-line argument from the IO chain (with the missing-arg case handled explicitly), decodes through the platform validator, prints the greeting.
 
 ## Running
 
 Install the Awsum compiler (see [awsum-lang/awsum](https://github.com/awsum-lang/awsum)) and ensure `awsum` is on your `PATH`. Then from a checkout:
 
 ```bash
-awsum run hello/Main.aww --program-type cli -t llvm --stdin < hello/input.txt
+awsum run hello/Main.aww --program-type cli -t llvm -- "$(cat hello/input.txt)"
 ```
 
 Replace `-t llvm` with `jvm` / `clr` / `wasm` / `js` to compile through any other backend — the same program produces identical stdout on every target (see the [language guarantees](https://github.com/awsum-lang/awsum/blob/main/docs/principles.md)).
