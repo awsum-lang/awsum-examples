@@ -1,40 +1,24 @@
-{- Basic string concatenation, helper function, IO.Stdout.print and
-IO.Args.getArgs. Reads the first command-line argument from the IO
-chain, decodes through the platform validator, prints the greeting. -}
+{- Greets the name passed as the first command-line argument. -}
 
 import IO.Stdout
 import IO.Args
 
-_unused : Int32
-_unused = 42
-
-greeting : String
-greeting = "Hello" -- Line comment
-
-addGreeting : String -> Either StringTooLong String
-addGreeting name = do
-  s0 <- greeting ++ ", "
-  s1 <- s0 ++ name
-  s1 ++ "!"
-
 type NoArg = NoArg
-
-greet : List String -> IO Never Unit
-greet args =
-  let res : Either (NoArg | StringTooLong) String = do
-        first <- nothingAsLeft NoArg (headList args)
-        addGreeting first
-   in case res of
-        Left (_n : NoArg) -> IO.Stdout.print "NO_ARG"
-        Left (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-        Right s -> IO.Stdout.print s
-
-handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
-handleInputErr e = case e of
-  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
 main : IO Never Unit
 main = IO.Args.getArgs
-  |> andThenIO greet
-  |> handleErrorIO handleInputErr
+  |> andThenIO (\args -> eitherToIO (greet args))
+  |> andThenIO IO.Stdout.print
+  |> handleErrorIO printError
+
+greet : List String -> Either (NoArg | StringTooLong) String
+greet args = do
+  name <- headList args |> nothingAsLeft NoArg
+  hello <- "Hello, " ++ name
+  hello ++ "!"
+
+printError : (StringTooLong | UnpairedUtf16Surrogate | NoArg) -> IO Never Unit
+printError e = case e of
+  StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+  UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+  NoArg -> IO.Stdout.print "NO_ARG"
