@@ -11,7 +11,7 @@ Example programs for the [Awsum](https://awsum-lang.org) programming language (`
 Install the Awsum compiler (see [awsum-lang/awsum](https://github.com/awsum-lang/awsum)) and ensure `awsum` is on your `PATH`. Then from a checkout:
 
 ```bash
-awsum run hello/Main.aww --program-type cli -t llvm -- "$(cat hello/input.txt)"
+awsum run hello/Main.aww --program-type cli -t llvm -- "world"
 ```
 
 Replace `-t llvm` with `jvm` / `clr` / `wasm` / `js` to compile through any other backend — the same program produces identical stdout on every target (see the [language guarantees](https://github.com/awsum-lang/awsum/blob/main/docs/principles.md)).

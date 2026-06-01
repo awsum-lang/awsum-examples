@@ -29,15 +29,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-24.04,     target: linux-x86_64-gnu,     asset: linux-x86_64-gnu,  llvm-flavor: apt   }
-          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu,    asset: linux-aarch64-gnu, llvm-flavor: apt   }
-          - { os: macos-15,         target: macos-aarch64,        asset: macos-aarch64,     llvm-flavor: brew  }
-          - { os: windows-2025,     target: windows-x86_64,       asset: windows-x86_64,    llvm-flavor: msvc  }
-          - { os: windows-2025,     target: windows-x86_64-mingw, asset: windows-x86_64,    llvm-flavor: mingw }
+          - {
+              os: ubuntu-24.04,
+              target: linux-x86_64-gnu,
+              asset: linux-x86_64-gnu,
+              llvm-flavor: apt,
+            }
+          - {
+              os: ubuntu-24.04-arm,
+              target: linux-aarch64-gnu,
+              asset: linux-aarch64-gnu,
+              llvm-flavor: apt,
+            }
+          - {
+              os: macos-15,
+              target: macos-aarch64,
+              asset: macos-aarch64,
+              llvm-flavor: brew,
+            }
+          - {
+              os: windows-2025,
+              target: windows-x86_64,
+              asset: windows-x86_64,
+              llvm-flavor: msvc,
+            }
+          - {
+              os: windows-2025,
+              target: windows-x86_64-mingw,
+              asset: windows-x86_64,
+              llvm-flavor: mingw,
+            }
 
     env:
       # Compiler version downloaded from awsum-lang/awsum GitHub Releases.
-      AWSUM_VERSION: 0.0.4
+      AWSUM_VERSION: 0.0.5
 
     defaults:
       run:
@@ -134,7 +159,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          distribution: "zulu"
+          distribution: "temurin"
           java-version: "11"
 
       - name: Set up .NET
@@ -186,7 +211,7 @@ jobs:
           expected="Hello, world!"
           for target in llvm jvm clr wasm js; do
             echo "=== $target ==="
-            actual=$(awsum run hello/Main.aww --program-type cli -t "$target" -- "$(cat hello/input.txt)")
+            actual=$(awsum run hello/Main.aww --program-type cli -t "$target" -- "world")
             if [[ "$actual" != "$expected" ]]; then
               printf 'target=%s\nexpected: %s\nactual:   %s\n' "$target" "$expected" "$actual"
               exit 1
