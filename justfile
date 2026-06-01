@@ -25,7 +25,7 @@ test:
   expected="Hello, world!"
   for target in llvm jvm clr wasm js; do
     echo "=== $target ==="
-    actual=$(awsum run hello/Main.aww --program-type cli -t "$target" --stdin < hello/input.txt)
+    actual=$(awsum run hello/Main.aww --program-type cli -t "$target" -- "world")
     if [ "$actual" != "$expected" ]; then
       printf 'target=%s\nexpected: %s\nactual:   %s\n' "$target" "$expected" "$actual"
       exit 1
