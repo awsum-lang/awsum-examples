@@ -28,7 +28,7 @@ Replace `-t llvm` with `jvm` / `clr` / `wasm` / `js` to compile through any othe
 
 ## AI use
 
-These example programs are developed with substantial usage of generative AI. Every generated change is reviewed, edited, and accepted by a human before it lands in the repository, and no output is shipped unedited.
+These example programs are developed with substantial usage of generative AI.
 
 ## License
 

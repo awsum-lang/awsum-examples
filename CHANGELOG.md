@@ -10,6 +10,10 @@ Until `awsum 1.0.0`, the project does not follow SemVer — every release increm
 
 ## [Unreleased]
 
+### Changed
+
+- CI runs the examples on the runtimes `awsum` 0.0.8 targets: Java 25, .NET 10, Node.js 26 (previously Java 11, .NET 9, Node.js 22). `actions/setup-java` and `actions/setup-dotnet` v5 → v6, `actions/setup-node` v6 → v7. Every GitHub Action is pinned to the commit SHA of a release at least 7 days old, and the runtimes to exact versions (Temurin 25.0.5, .NET SDK 10.0.403, Node.js 26.13.0, wasmtime 50.0.1).
+
 ## [0.0.4] - 2026-05-13
 
 ### Added
